@@ -254,7 +254,8 @@ lazy val rawAllAggregates = core.projectRefs ++
   playClient.projectRefs ++
   play29Client.projectRefs ++
   tests.projectRefs ++
-  perfTests.projectRefs ++
+  perfTestsE2e.projectRefs ++
+  perfTestsMicro.projectRefs ++
   examples.projectRefs ++
   documentation.projectRefs ++
   openapiCodegenCore.projectRefs ++
@@ -547,11 +548,11 @@ lazy val perfServerJavaOptions = List(
   "-XX:+AlwaysPreTouch"
 )
 
-lazy val perfTests: ProjectMatrix = (projectMatrix in file("perf-tests"))
+lazy val perfTestsE2e: ProjectMatrix = (projectMatrix in file("perf-tests/perf-tests-e2e"))
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings)
   .settings(
-    name := "tapir-perf-tests",
+    name := "tapir-perf-tests-e2e",
     libraryDependencies ++= Seq(
       // Required to force newer jackson in Pekko, a version that is compatible with Gatling's Jackson dependency
       "io.gatling.highcharts" % "gatling-charts-highcharts" % "3.11.5" % "test" exclude (
@@ -591,6 +592,20 @@ lazy val perfTests: ProjectMatrix = (projectMatrix in file("perf-tests"))
     vertxServerCats,
     nimaServer
   )
+
+lazy val perfTestsMicro: ProjectMatrix = (projectMatrix in file("perf-tests/perf-tests-micro"))
+  .enablePlugins(JmhPlugin)
+  .settings(commonSettings)
+  .settings(
+    name := "tapir-perf-tests-micro",
+    libraryDependencies ++= Seq(
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % Versions.jsoniter,
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % Versions.jsoniter
+    ),
+    publishArtifact := false
+  )
+  .jvmPlatform(scalaVersions = List(scala3), settings = commonJvmSettings)
+  .dependsOn(core, jsoniterScala)
 
 // integrations
 
