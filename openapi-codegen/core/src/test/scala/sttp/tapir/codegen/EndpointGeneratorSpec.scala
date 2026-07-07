@@ -2,6 +2,7 @@ package sttp.tapir.codegen
 
 import sttp.tapir.codegen.json.JsonSerdeLib
 import sttp.tapir.codegen.dedup.PackageReuseContext
+import sttp.tapir.codegen.endpoints.{EndpointGenerator, FS2}
 import sttp.tapir.codegen.openapi.models.OpenapiComponent
 import sttp.tapir.codegen.openapi.models.OpenapiModels.{
   OpenapiDocument,
@@ -28,6 +29,8 @@ import sttp.tapir.codegen.openapi.models.OpenapiSchemaType.{
   OpenapiSchemaString
 }
 import sttp.tapir.codegen.testutils.CompileCheckTestBase
+import sttp.tapir.codegen.validation.ValidationDefns
+import sttp.tapir.codegen.xml.XmlSerdeLib
 
 import scala.collection.mutable
 
@@ -80,7 +83,7 @@ class EndpointGeneratorSpec extends CompileCheckTestBase {
           validators = ValidationDefns.empty,
           generateValidators = true,
           packageReuse = PackageReuseContext.none,
-          seperateFilesForModels = false,
+          seperateFilesForModels = false
         )
         .endpointDecls(None)
     generatedCode should include("val getTestAsdId =")
@@ -173,7 +176,7 @@ class EndpointGeneratorSpec extends CompileCheckTestBase {
           validators = ValidationDefns.empty,
           generateValidators = true,
           packageReuse = PackageReuseContext.none,
-          seperateFilesForModels = false,
+          seperateFilesForModels = false
         )
         .endpointDecls(None)).shouldCompile()
   }
@@ -233,7 +236,7 @@ class EndpointGeneratorSpec extends CompileCheckTestBase {
           validators = ValidationDefns.empty,
           generateValidators = true,
           packageReuse = PackageReuseContext.none,
-          seperateFilesForModels = false,
+          seperateFilesForModels = false
         )
         .endpointDecls(None)
     generatedCode should include(
@@ -342,7 +345,7 @@ class EndpointGeneratorSpec extends CompileCheckTestBase {
       useCustomJsoniterSerdes = true,
       packageReuse = PackageReuseContext.none,
       seperateFilesForModels = false,
-      alwaysGenerateParamSupport = false,
+      alwaysGenerateParamSupport = false
     )
     val generatedCode = generatedObj.allFiles("TapirGeneratedEndpointsSchemas") + "\n" + generatedObj.allFiles("TapirGeneratedEndpoints")
     generatedCode.shouldCompile()
