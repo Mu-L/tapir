@@ -18,18 +18,27 @@ private[tapir] class CaseClassUtil[C <: blackbox.Context, T: C#WeakTypeTag](val 
     .paramLists
     .head
 
-  lazy val companion: Ident = Ident(TermName(t.typeSymbol.name.decodedName.toString))
+  // the reference to the companion object must be qualified with the case class's prefix, as a bare-name identifier
+  // doesn't resolve for classes nested in objects or classes (see: https://github.com/softwaremill/tapir/issues/4354);
+  // local classes have no prefix, but there a bare name is in scope
+  lazy val companion: Tree = {
+    val name = TermName(t.typeSymbol.name.decodedName.toString)
+    t.dealias match {
+      case TypeRef(pre, _, _) if pre != NoPrefix => Select(c.internal.gen.mkAttributedQualifier(pre), name)
+      case _                                     => Ident(name)
+    }
+  }
 
-  lazy val instanceFromValues: Tree = if (fields.size == 1) {
-    q"$companion.apply(values.head.asInstanceOf[${fields.head.typeSignature}])"
-  } else {
-    q"($companion.apply _).tupled.asInstanceOf[Any => $t].apply(sttp.tapir.internal.SeqToParams(values))"
+  // apply is called with explicit arguments instead of eta-expansion (`(apply _).tupled`), as the latter fails to
+  // compile when the companion defines additional apply overloads
+  lazy val instanceFromValues: Tree = {
+    val args = fields.zipWithIndex.map { case (field, i) => q"values($i).asInstanceOf[${field.typeSignature}]" }
+    q"$companion.apply(..$args)"
   }
 
   lazy val schema: Tree = c.typecheck(q"_root_.scala.Predef.implicitly[_root_.sttp.tapir.Schema[$t]]")
 
   lazy val classSymbol: ClassSymbol = t.typeSymbol.asClass
-  lazy val className: TermName = classSymbol.asType.name.toTermName
 
   def annotated(field: Symbol, annotationType: c.Type): Boolean =
     findAnnotation(field, annotationType).isDefined
