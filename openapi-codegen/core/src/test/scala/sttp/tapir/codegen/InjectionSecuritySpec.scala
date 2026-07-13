@@ -441,7 +441,8 @@ class InjectionSecuritySpec extends CompileCheckTestBase {
           validators = ValidationDefns.empty,
           generateValidators = true,
           packageReuse = PackageReuseContext.none,
-          seperateFilesForModels = false
+          seperateFilesForModels = false,
+          addDisambiguationCodes = true
         )
         .endpointDecls(None)
 }
