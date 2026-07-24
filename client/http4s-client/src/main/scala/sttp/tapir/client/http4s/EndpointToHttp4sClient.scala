@@ -100,15 +100,18 @@ private[http4s] class EndpointToHttp4sClient(clientOptions: Http4sClientOptions)
           currentUri.withQueryParam(key, values)
         }
         req.withUri(uri)
-      case EndpointIO.Empty(_, _)                                                   => req
-      case EndpointIO.Body(bodyType, codec, _)                                      => setBody(value, bodyType, codec, req)
-      case EndpointIO.OneOfBody(EndpointIO.OneOfBodyVariant(_, Left(body)) :: _, _) => setInputParams(body, params, req)
-      case EndpointIO.OneOfBody(
-            EndpointIO.OneOfBodyVariant(_, Right(EndpointIO.StreamBodyWrapper(StreamBodyIO(streams, _, _, _, _)))) :: _,
-            _
-          ) =>
-        setStreamingBody(streams)(value.asInstanceOf[streams.BinaryStream], req)
-      case EndpointIO.OneOfBody(Nil, _)                                    => throw new RuntimeException("One of body without variants")
+      case EndpointIO.Empty(_, _)              => req
+      case EndpointIO.Body(bodyType, codec, _) => setBody(value, bodyType, codec, req)
+      case ob: EndpointIO.OneOfBody[_, _]      =>
+        ob.headVariantBodyWithAppliedMapping match {
+          case Some(Left(body))                                                                 => setInputParams(body, params, req)
+          case Some(Right(EndpointIO.StreamBodyWrapper(StreamBodyIO(streams, codec, _, _, _)))) =>
+            setStreamingBody(streams)(
+              codec.asInstanceOf[Codec[Any, Any, CodecFormat]].encode(value).asInstanceOf[streams.BinaryStream],
+              req
+            )
+          case None => throw new RuntimeException("One of body without variants")
+        }
       case EndpointIO.StreamBodyWrapper(StreamBodyIO(streams, _, _, _, _)) =>
         setStreamingBody(streams)(value.asInstanceOf[streams.BinaryStream], req)
       case EndpointIO.Header(name, codec, _) =>

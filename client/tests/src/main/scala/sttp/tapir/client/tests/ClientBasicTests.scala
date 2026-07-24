@@ -250,6 +250,13 @@ trait ClientBasicTests { this: ClientTests[Any] =>
     )
 
     testClient(
+      in_one_of_json_xml_text_mapped_out_string.in("api" / "echo"),
+      (),
+      FruitWrapper(Fruit("apple")),
+      Right("""{"f":"apple"}""")
+    )
+
+    testClient(
       in_string_out_one_of_json_xml_text.in(header(Header.accept(MediaType.ApplicationJson))).in("content-negotiation" / "fruit"),
       (),
       "apple",
@@ -260,6 +267,13 @@ trait ClientBasicTests { this: ClientTests[Any] =>
       (),
       "apple",
       Right(Fruit("apple (xml)"))
+    )
+
+    testClient(
+      in_string_out_one_of_json_xml_text_mapped.in(header(Header.accept(MediaType.ApplicationJson))).in("content-negotiation" / "fruit"),
+      (),
+      "apple",
+      Right(FruitWrapper(Fruit("apple (json)")))
     )
   }
 }
